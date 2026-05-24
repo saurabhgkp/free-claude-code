@@ -15,17 +15,8 @@ services:
       - key: ALLOWED_TELEGRAM_USER_ID
         sync: false
 
-      # ── Static values (already correct, no need to change) ─────────────────
+      # ── Static values ────────────────────────────────────────────────────────
       - key: MODEL
         value: nvidia_nim/meta/llama3-70b-instruct
       - key: MESSAGING_PLATFORM
         value: telegram
-      - key: CLAUDE_WORKSPACE
-        value: /data/agent_workspace
-
-    # Persistent disk — stores session state across redeploys (paid plans only)
-    # Remove this section if on the free tier; session data will reset on redeploy.
-    disk:
-      name: agent-workspace
-      mountPath: /data
-      sizeGB: 1
