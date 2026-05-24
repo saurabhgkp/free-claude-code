@@ -5,7 +5,9 @@ __pycache__
 .ruff_cache
 .serena
 .venv
+venv
 agent_workspace
 .env
-server.log
+*.log
 .coverage
+package-lock.json

@@ -17,7 +17,7 @@ class Settings(BaseSettings):
     # ==================== Messaging Platform Selection ====================
     # Valid: "telegram" | "discord"
     messaging_platform: str = Field(
-        default="discord", validation_alias="MESSAGING_PLATFORM"
+        default="telegram", validation_alias="MESSAGING_PLATFORM"
     )
 
     # ==================== NVIDIA NIM Config ====================
@@ -71,6 +71,25 @@ class Settings(BaseSettings):
 
     # ==================== NIM Settings ====================
     nim: NimSettings = Field(default_factory=NimSettings)
+
+    # ==================== Context Window Configuration ====================
+    model_context_window: str = Field(
+        default="", validation_alias="MODEL_CONTEXT_WINDOW"
+    )
+    """Context window configuration for models to prevent max_tokens overflow.
+    Can be:
+    - Empty (default) - uses built-in defaults per model/provider.
+    - A single integer - applies to all models (e.g., "131072").
+    - Comma-separated mappings: "model_a:window_a,model_b:window_b,provider:window"
+      Model can be full model name or a prefix; longer prefixes are matched first.
+    """
+
+    context_window_safety_margin: int = Field(
+        default=100, validation_alias="CONTEXT_WINDOW_SAFETY_MARGIN"
+    )
+    """Safety margin in tokens to reserve beyond max_tokens (default 100).
+    This ensures the request stays within the model's context window with buffer.
+    """
 
     # ==================== Voice Note Transcription ====================
     voice_note_enabled: bool = Field(

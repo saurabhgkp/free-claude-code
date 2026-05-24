@@ -8,6 +8,7 @@ included at top level for easy grep/filter.
 
 import json
 import logging
+import sys
 from pathlib import Path
 
 from loguru import logger
@@ -82,6 +83,14 @@ def configure_logging(log_file: str, *, force: bool = False) -> None:
         encoding="utf-8",
         mode="a",
         rotation="50 MB",
+    )
+
+    # Add stdout sink: INFO level for cloud log viewers (Render, etc.)
+    logger.add(
+        sys.stdout,
+        level="INFO",
+        format=_serialize_with_context,
+        colorize=False,
     )
 
     # Intercept stdlib logging: route all root logger output to loguru

@@ -1,0 +1,31 @@
+services:
+  - type: web
+    name: free-claude-code
+    runtime: python
+    # uv installs Python 3.14 from .python-version automatically
+    buildCommand: pip install uv && uv python install 3.14 && uv sync
+    startCommand: uv run uvicorn server:app --host 0.0.0.0 --port $PORT --timeout-graceful-shutdown 5
+
+    envVars:
+      # ── Secrets (set these in the Render dashboard) ─────────────────────────
+      - key: NVIDIA_NIM_API_KEY
+        sync: false
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: ALLOWED_TELEGRAM_USER_ID
+        sync: false
+
+      # ── Static values (already correct, no need to change) ─────────────────
+      - key: MODEL
+        value: nvidia_nim/meta/llama3-70b-instruct
+      - key: MESSAGING_PLATFORM
+        value: telegram
+      - key: CLAUDE_WORKSPACE
+        value: /data/agent_workspace
+
+    # Persistent disk — stores session state across redeploys (paid plans only)
+    # Remove this section if on the free tier; session data will reset on redeploy.
+    disk:
+      name: agent-workspace
+      mountPath: /data
+      sizeGB: 1
