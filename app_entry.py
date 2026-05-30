@@ -1,12 +1,16 @@
-"""
-PyInstaller entry point.
+"""PyInstaller entry point."""
 
-Use this file as the PyInstaller target (not server.py).
-The app object is passed directly to uvicorn.run() to avoid string-based
-module imports, which don't work in frozen executables.
-"""
 import multiprocessing
+import os
 import sys
+
+
+def _set_tiktoken_cache():
+    """Point tiktoken at its bundled BPE data files when frozen."""
+    if getattr(sys, "frozen", False):
+        base = sys._MEIPASS  # noqa: SLF001
+        cache = os.path.join(base, "tiktoken_cache")
+        os.environ.setdefault("TIKTOKEN_CACHE_DIR", cache)
 
 
 def _run():
@@ -16,6 +20,7 @@ def _run():
     from config.settings import get_settings
 
     settings = get_settings()
+    print(f"\n  free-claude-code is running on http://localhost:{settings.port}\n")
     uvicorn.run(
         app,
         host=settings.host,
@@ -26,6 +31,6 @@ def _run():
 
 
 if __name__ == "__main__":
-    # Required on Windows so spawned subprocesses don't re-run the entry point
     multiprocessing.freeze_support()
+    _set_tiktoken_cache()
     _run()
