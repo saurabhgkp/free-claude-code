@@ -17,3 +17,5 @@ services:
       # ── Static values (match hardcoded defaults — kept for visibility) ────────
       - key: MESSAGING_PLATFORM
         value: telegram
+      - key: TIKTOKEN_CACHE_DIR
+        value: ./tiktoken_cache
