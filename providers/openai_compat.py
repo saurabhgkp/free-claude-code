@@ -21,6 +21,7 @@ from providers.common import (
     map_error,
     map_stop_reason,
 )
+from providers.common.context_window import adjust_max_tokens_for_context_window
 from providers.rate_limit import GlobalRateLimiter
 
 
@@ -139,6 +140,8 @@ class OpenAICompatibleProvider(BaseProvider):
         sse = SSEBuilder(message_id, request.model, input_tokens)
 
         body = self._build_request_body(request)
+        # Adjust max_tokens based on model's context window and input size
+        adjust_max_tokens_for_context_window(body, input_tokens)
         req_tag = f" request_id={request_id}" if request_id else ""
         logger.info(
             "{}_STREAM:{} model={} msgs={} tools={}",

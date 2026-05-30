@@ -22,25 +22,13 @@ from .commands import (
 from .event_parser import parse_cli_event
 from .models import IncomingMessage
 from .platforms.base import MessagingPlatform, SessionManagerInterface
-from .rendering.discord_markdown import (
-    discord_bold,
-    discord_code_inline,
-    escape_discord,
-    escape_discord_code,
-    render_markdown_to_discord,
-)
-from .rendering.discord_markdown import (
-    format_status as format_status_discord,  # (emoji, label, suffix)
-)
 from .rendering.telegram_markdown import (
     escape_md_v2,
     escape_md_v2_code,
+    format_status as format_status_telegram,
     mdv2_bold,
     mdv2_code_inline,
     render_markdown_to_mdv2,
-)
-from .rendering.telegram_markdown import (
-    format_status as format_status_telegram,
 )
 from .session import SessionStore
 from .transcript import RenderCtx, TranscriptBuffer
@@ -124,21 +112,16 @@ class ClaudeMessageHandler:
             queue_update_callback=self.update_queue_positions,
             node_started_callback=self.mark_node_processing,
         )
-        is_discord = platform.name == "discord"
-        self._format_status_fn = (
-            format_status_discord if is_discord else format_status_telegram
-        )
-        self._parse_mode_val: str | None = None if is_discord else "MarkdownV2"
+        self._format_status_fn = format_status_telegram
+        self._parse_mode_val: str | None = "MarkdownV2"
         self._render_ctx_val = RenderCtx(
-            bold=discord_bold if is_discord else mdv2_bold,
-            code_inline=discord_code_inline if is_discord else mdv2_code_inline,
-            escape_code=escape_discord_code if is_discord else escape_md_v2_code,
-            escape_text=escape_discord if is_discord else escape_md_v2,
-            render_markdown=render_markdown_to_discord
-            if is_discord
-            else render_markdown_to_mdv2,
+            bold=mdv2_bold,
+            code_inline=mdv2_code_inline,
+            escape_code=escape_md_v2_code,
+            escape_text=escape_md_v2,
+            render_markdown=render_markdown_to_mdv2,
         )
-        self._limit_chars = 1900 if is_discord else 3900
+        self._limit_chars = 3900
 
     def format_status(self, emoji: str, label: str, suffix: str | None = None) -> str:
         return self._format_status_fn(emoji, label, suffix)

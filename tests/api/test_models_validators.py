@@ -10,9 +10,6 @@ from config.settings import Settings
 def mock_settings():
     settings = Settings()
     settings.model = "nvidia_nim/target-model-from-settings"
-    settings.model_opus = None
-    settings.model_sonnet = None
-    settings.model_haiku = None
     return settings
 
 
@@ -67,7 +64,6 @@ def test_messages_request_model_mapping_logs(mock_settings):
 
 
 def test_messages_request_resolved_provider_model_default(mock_settings):
-    """resolved_provider_model is set to the full model string."""
     with patch("api.models.anthropic.get_settings", return_value=mock_settings):
         request = MessagesRequest(
             model="claude-3-opus",
@@ -79,85 +75,34 @@ def test_messages_request_resolved_provider_model_default(mock_settings):
         )
 
 
-def test_messages_request_model_aware_opus_override():
-    """Opus model routes to MODEL_OPUS when set."""
+def test_messages_request_model_fallback():
+    """All Claude model names fall back to MODEL."""
     settings = Settings()
     settings.model = "nvidia_nim/fallback-model"
-    settings.model_opus = "open_router/deepseek/deepseek-r1"
 
     with patch("api.models.anthropic.get_settings", return_value=settings):
-        request = MessagesRequest(
-            model="claude-opus-4-20250514",
-            max_tokens=100,
-            messages=[Message(role="user", content="hello")],
-        )
-        assert request.model == "deepseek/deepseek-r1"
-        assert request.resolved_provider_model == "open_router/deepseek/deepseek-r1"
-        assert request.original_model == "claude-opus-4-20250514"
-
-
-def test_messages_request_model_aware_haiku_override():
-    """Haiku model routes to MODEL_HAIKU when set."""
-    settings = Settings()
-    settings.model = "nvidia_nim/fallback-model"
-    settings.model_haiku = "lmstudio/qwen2.5-7b"
-
-    with patch("api.models.anthropic.get_settings", return_value=settings):
-        request = MessagesRequest(
-            model="claude-3-haiku-20240307",
-            max_tokens=100,
-            messages=[Message(role="user", content="hello")],
-        )
-        assert request.model == "qwen2.5-7b"
-        assert request.resolved_provider_model == "lmstudio/qwen2.5-7b"
-
-
-def test_messages_request_model_aware_sonnet_override():
-    """Sonnet model routes to MODEL_SONNET when set."""
-    settings = Settings()
-    settings.model = "nvidia_nim/fallback-model"
-    settings.model_sonnet = "nvidia_nim/meta/llama-3.3-70b-instruct"
-
-    with patch("api.models.anthropic.get_settings", return_value=settings):
-        request = MessagesRequest(
-            model="claude-sonnet-4-20250514",
-            max_tokens=100,
-            messages=[Message(role="user", content="hello")],
-        )
-        assert request.model == "meta/llama-3.3-70b-instruct"
-        assert (
-            request.resolved_provider_model == "nvidia_nim/meta/llama-3.3-70b-instruct"
-        )
-
-
-def test_messages_request_model_fallback_when_not_set():
-    """When model override is None, falls back to MODEL."""
-    settings = Settings()
-    settings.model = "nvidia_nim/fallback-model"
-    settings.model_opus = None
-    settings.model_sonnet = None
-    settings.model_haiku = None
-    # model_opus is None
-
-    with patch("api.models.anthropic.get_settings", return_value=settings):
-        request = MessagesRequest(
-            model="claude-opus-4-20250514",
-            max_tokens=100,
-            messages=[Message(role="user", content="hello")],
-        )
-        assert request.model == "fallback-model"
-        assert request.resolved_provider_model == "nvidia_nim/fallback-model"
+        for model_name in [
+            "claude-opus-4-20250514",
+            "claude-sonnet-4-20250514",
+            "claude-3-haiku-20240307",
+            "claude-2.1",
+        ]:
+            request = MessagesRequest(
+                model=model_name,
+                max_tokens=100,
+                messages=[Message(role="user", content="hello")],
+            )
+            assert request.model == "fallback-model"
+            assert request.resolved_provider_model == "nvidia_nim/fallback-model"
 
 
 def test_token_count_request_model_aware():
-    """TokenCountRequest also uses model-aware resolution."""
     settings = Settings()
     settings.model = "nvidia_nim/fallback-model"
-    settings.model_haiku = "lmstudio/qwen2.5-7b"
 
     with patch("api.models.anthropic.get_settings", return_value=settings):
         request = TokenCountRequest(
             model="claude-3-haiku-20240307",
             messages=[Message(role="user", content="hello")],
         )
-        assert request.model == "qwen2.5-7b"
+        assert request.model == "fallback-model"

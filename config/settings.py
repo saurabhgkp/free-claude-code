@@ -2,7 +2,7 @@
 
 from functools import lru_cache
 
-from pydantic import Field, field_validator, model_validator
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from .nim import NimSettings
@@ -11,59 +11,28 @@ from .nim import NimSettings
 class Settings(BaseSettings):
     """Application settings loaded from environment variables."""
 
-    # ==================== OpenRouter Config ====================
-    open_router_api_key: str = Field(default="", validation_alias="OPENROUTER_API_KEY")
-
-    # ==================== Messaging Platform Selection ====================
-    # Valid: "telegram" | "discord"
-    messaging_platform: str = Field(
-        default="telegram", validation_alias="MESSAGING_PLATFORM"
-    )
-
-    # ==================== NVIDIA NIM Config ====================
+    # ==================== NVIDIA NIM ====================
     nvidia_nim_api_key: str = ""
 
-    # ==================== LM Studio Config ====================
-    lm_studio_base_url: str = Field(
-        default="http://localhost:1234/v1",
-        validation_alias="LM_STUDIO_BASE_URL",
-    )
-
     # ==================== Model ====================
-    # All Claude model requests are mapped to this single model (fallback)
-    # Format: provider_type/model/name
     model: str = "nvidia_nim/stepfun-ai/step-3.5-flash"
-
-    # Per-model overrides (optional, falls back to MODEL)
-    # Each can use a different provider
-    model_opus: str | None = Field(default=None, validation_alias="MODEL_OPUS")
-    model_sonnet: str | None = Field(default=None, validation_alias="MODEL_SONNET")
-    model_haiku: str | None = Field(default=None, validation_alias="MODEL_HAIKU")
 
     # ==================== Provider Rate Limiting ====================
     provider_rate_limit: int = Field(default=40, validation_alias="PROVIDER_RATE_LIMIT")
-    provider_rate_window: int = Field(
-        default=60, validation_alias="PROVIDER_RATE_WINDOW"
-    )
+    provider_rate_window: int = Field(default=60, validation_alias="PROVIDER_RATE_WINDOW")
     provider_max_concurrency: int = Field(
         default=5, validation_alias="PROVIDER_MAX_CONCURRENCY"
     )
 
     # ==================== HTTP Client Timeouts ====================
-    http_read_timeout: float = Field(
-        default=300.0, validation_alias="HTTP_READ_TIMEOUT"
-    )
-    http_write_timeout: float = Field(
-        default=10.0, validation_alias="HTTP_WRITE_TIMEOUT"
-    )
+    http_read_timeout: float = Field(default=300.0, validation_alias="HTTP_READ_TIMEOUT")
+    http_write_timeout: float = Field(default=10.0, validation_alias="HTTP_WRITE_TIMEOUT")
     http_connect_timeout: float = Field(
         default=2.0, validation_alias="HTTP_CONNECT_TIMEOUT"
     )
 
-    # ==================== Fast Prefix Detection ====================
-    fast_prefix_detection: bool = True
-
     # ==================== Optimizations ====================
+    fast_prefix_detection: bool = True
     enable_network_probe_mock: bool = True
     enable_title_generation_skip: bool = True
     enable_suggestion_mode_skip: bool = True
@@ -72,49 +41,19 @@ class Settings(BaseSettings):
     # ==================== NIM Settings ====================
     nim: NimSettings = Field(default_factory=NimSettings)
 
-    # ==================== Context Window Configuration ====================
+    # ==================== Context Window ====================
     model_context_window: str = Field(
         default="", validation_alias="MODEL_CONTEXT_WINDOW"
     )
-    """Context window configuration for models to prevent max_tokens overflow.
-    Can be:
-    - Empty (default) - uses built-in defaults per model/provider.
-    - A single integer - applies to all models (e.g., "131072").
-    - Comma-separated mappings: "model_a:window_a,model_b:window_b,provider:window"
-      Model can be full model name or a prefix; longer prefixes are matched first.
-    """
-
     context_window_safety_margin: int = Field(
         default=100, validation_alias="CONTEXT_WINDOW_SAFETY_MARGIN"
     )
-    """Safety margin in tokens to reserve beyond max_tokens (default 100).
-    This ensures the request stays within the model's context window with buffer.
-    """
 
-    # ==================== Voice Note Transcription ====================
-    voice_note_enabled: bool = Field(
-        default=False, validation_alias="VOICE_NOTE_ENABLED"
-    )
-    # Device: "cpu" | "cuda" | "nvidia_nim"
-    # - "cpu"/"cuda": local Whisper (requires voice_local extra: uv sync --extra voice_local)
-    # - "nvidia_nim": NVIDIA NIM Whisper API (requires voice extra: uv sync --extra voice)
-    whisper_device: str = Field(default="cpu", validation_alias="WHISPER_DEVICE")
-    # Whisper model ID or short name (for local Whisper) or NVIDIA NIM model (for nvidia_nim)
-    # Local Whisper: "tiny", "base", "small", "medium", "large-v2", "large-v3", "large-v3-turbo"
-    # NVIDIA NIM: "nvidia/parakeet-ctc-1.1b-asr", "openai/whisper-large-v3", etc.
-    whisper_model: str = Field(default="base", validation_alias="WHISPER_MODEL")
-    # Hugging Face token for faster model downloads (optional, for local Whisper)
-    hf_token: str = Field(default="", validation_alias="HF_TOKEN")
-
-    # ==================== Bot Wrapper Config ====================
+    # ==================== Telegram Bot ====================
     telegram_bot_token: str | None = None
     allowed_telegram_user_id: str | None = None
-    discord_bot_token: str | None = Field(
-        default=None, validation_alias="DISCORD_BOT_TOKEN"
-    )
-    allowed_discord_channels: str | None = Field(
-        default=None, validation_alias="ALLOWED_DISCORD_CHANNELS"
-    )
+
+    # ==================== Agent Config ====================
     claude_workspace: str = "./agent_workspace"
     allowed_dir: str = ""
 
@@ -123,96 +62,36 @@ class Settings(BaseSettings):
     port: int = 8082
     log_file: str = "server.log"
 
-    # Handle empty strings for optional string fields
-    @field_validator(
-        "telegram_bot_token",
-        "allowed_telegram_user_id",
-        "discord_bot_token",
-        "allowed_discord_channels",
-        mode="before",
-    )
+    @field_validator("telegram_bot_token", "allowed_telegram_user_id", mode="before")
     @classmethod
     def parse_optional_str(cls, v):
-        if v == "":
-            return None
-        return v
+        return None if v == "" else v
 
-    @field_validator("whisper_device")
+    @field_validator("model")
     @classmethod
-    def validate_whisper_device(cls, v: str) -> str:
-        if v not in ("cpu", "cuda", "nvidia_nim"):
+    def validate_model_format(cls, v: str) -> str:
+        if "/" not in v or not v.startswith("nvidia_nim/"):
             raise ValueError(
-                f"whisper_device must be 'cpu', 'cuda', or 'nvidia_nim', got {v!r}"
+                "MODEL must be in format 'nvidia_nim/model/name'. "
+                "Only NVIDIA NIM is supported."
             )
         return v
 
-    @field_validator("model", "model_opus", "model_sonnet", "model_haiku")
-    @classmethod
-    def validate_model_format(cls, v: str | None) -> str | None:
-        if v is None:
-            return None
-        valid_providers = ("nvidia_nim", "open_router", "lmstudio")
-        if "/" not in v:
-            raise ValueError(
-                f"Model must be prefixed with provider type. "
-                f"Valid providers: {', '.join(valid_providers)}. "
-                f"Format: provider_type/model/name"
-            )
-        provider = v.split("/", 1)[0]
-        if provider not in valid_providers:
-            raise ValueError(
-                f"Invalid provider: '{provider}'. "
-                f"Supported: 'nvidia_nim', 'open_router', 'lmstudio'"
-            )
-        return v
-
-    @model_validator(mode="after")
-    def check_nvidia_nim_api_key(self) -> Settings:
-        if (
-            self.voice_note_enabled
-            and self.whisper_device == "nvidia_nim"
-            and not self.nvidia_nim_api_key.strip()
-        ):
-            raise ValueError(
-                "NVIDIA_NIM_API_KEY is required when WHISPER_DEVICE is 'nvidia_nim'. "
-                "Set it in your .env file."
-            )
-        return self
+    def resolve_model(self, claude_model_name: str) -> str:
+        """Map any Claude model name to the configured NVIDIA NIM model."""
+        return self.model
 
     @property
     def provider_type(self) -> str:
-        """Extract provider type from the default model string."""
-        return self.model.split("/", 1)[0]
+        return "nvidia_nim"
 
     @property
     def model_name(self) -> str:
-        """Extract the actual model name from the default model string."""
         return self.model.split("/", 1)[1]
-
-    def resolve_model(self, claude_model_name: str) -> str:
-        """Resolve a Claude model name to the configured provider/model string.
-
-        Classifies the incoming Claude model (opus/sonnet/haiku) and
-        returns the model-specific override if configured, otherwise the fallback MODEL.
-        """
-        name_lower = claude_model_name.lower()
-        if "opus" in name_lower and self.model_opus is not None:
-            return self.model_opus
-        if "haiku" in name_lower and self.model_haiku is not None:
-            return self.model_haiku
-        if "sonnet" in name_lower and self.model_sonnet is not None:
-            return self.model_sonnet
-        return self.model
 
     @staticmethod
     def parse_provider_type(model_string: str) -> str:
-        """Extract provider type from any 'provider/model' string."""
         return model_string.split("/", 1)[0]
-
-    @staticmethod
-    def parse_model_name(model_string: str) -> str:
-        """Extract model name from any 'provider/model' string."""
-        return model_string.split("/", 1)[1]
 
     model_config = SettingsConfigDict(
         env_file=".env",
@@ -223,5 +102,4 @@ class Settings(BaseSettings):
 
 @lru_cache
 def get_settings() -> Settings:
-    """Get cached settings instance."""
     return Settings()

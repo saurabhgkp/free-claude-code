@@ -50,25 +50,6 @@ def nim_provider(provider_config):
     return NvidiaNimProvider(provider_config, nim_settings=NimSettings())
 
 
-@pytest.fixture
-def open_router_provider(provider_config):
-    from providers.open_router import OpenRouterProvider
-
-    return OpenRouterProvider(provider_config)
-
-
-@pytest.fixture
-def lmstudio_provider(provider_config):
-    from providers.lmstudio import LMStudioProvider
-
-    lmstudio_config = ProviderConfig(
-        api_key="lm-studio",
-        base_url="http://localhost:1234/v1",
-        rate_limit=provider_config.rate_limit,
-        rate_window=provider_config.rate_window,
-    )
-    return LMStudioProvider(lmstudio_config)
-
 
 @pytest.fixture
 def mock_cli_session():

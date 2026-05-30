@@ -1,4 +1,4 @@
-import importlib
+﻿import importlib
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -18,12 +18,8 @@ def test_create_app_provider_error_handler_returns_anthropic_format():
 
     api_app_mod = importlib.import_module("api.app")
     settings = SimpleNamespace(
-        messaging_platform="telegram",
         telegram_bot_token=None,
-        allowed_telegram_user_id=None,
-        discord_bot_token=None,
-        allowed_discord_channels=None,
-        allowed_dir="",
+        allowed_telegram_user_id=None,        allowed_dir="",
         claude_workspace="./agent_workspace",
         host="127.0.0.1",
         port=8082,
@@ -52,12 +48,8 @@ def test_create_app_general_exception_handler_returns_500():
 
     api_app_mod = importlib.import_module("api.app")
     settings = SimpleNamespace(
-        messaging_platform="telegram",
         telegram_bot_token=None,
-        allowed_telegram_user_id=None,
-        discord_bot_token=None,
-        allowed_discord_channels=None,
-        allowed_dir="",
+        allowed_telegram_user_id=None,        allowed_dir="",
         claude_workspace="./agent_workspace",
         host="127.0.0.1",
         port=8082,
@@ -84,12 +76,8 @@ def test_app_lifespan_sets_state_and_cleans_up(tmp_path, messaging_enabled):
     app = create_app()
 
     settings = SimpleNamespace(
-        messaging_platform="telegram",
         telegram_bot_token="token" if messaging_enabled else None,
-        allowed_telegram_user_id="123",
-        discord_bot_token=None,
-        allowed_discord_channels=None,
-        allowed_dir=str(tmp_path / "workspace"),
+        allowed_telegram_user_id="123",        allowed_dir=str(tmp_path / "workspace"),
         claude_workspace=str(tmp_path / "data"),
         host="127.0.0.1",
         port=8082,
@@ -163,12 +151,8 @@ def test_app_lifespan_cleanup_continues_if_platform_stop_raises(tmp_path):
     app = create_app()
 
     settings = SimpleNamespace(
-        messaging_platform="telegram",
         telegram_bot_token="token",
-        allowed_telegram_user_id="123",
-        discord_bot_token=None,
-        allowed_discord_channels=None,
-        allowed_dir=str(tmp_path / "workspace"),
+        allowed_telegram_user_id="123",        allowed_dir=str(tmp_path / "workspace"),
         claude_workspace=str(tmp_path / "data"),
         host="127.0.0.1",
         port=8082,
@@ -216,12 +200,8 @@ def test_app_lifespan_messaging_import_error_no_crash(tmp_path, caplog):
     app = create_app()
 
     settings = SimpleNamespace(
-        messaging_platform="telegram",
         telegram_bot_token="token",
-        allowed_telegram_user_id="123",
-        discord_bot_token=None,
-        allowed_discord_channels=None,
-        allowed_dir=str(tmp_path / "workspace"),
+        allowed_telegram_user_id="123",        allowed_dir=str(tmp_path / "workspace"),
         claude_workspace=str(tmp_path / "data"),
         host="127.0.0.1",
         port=8082,
@@ -252,12 +232,8 @@ def test_app_lifespan_platform_start_exception_cleanup_still_runs(tmp_path):
     app = create_app()
 
     settings = SimpleNamespace(
-        messaging_platform="telegram",
         telegram_bot_token="token",
-        allowed_telegram_user_id="123",
-        discord_bot_token=None,
-        allowed_discord_channels=None,
-        allowed_dir=str(tmp_path / "workspace"),
+        allowed_telegram_user_id="123",        allowed_dir=str(tmp_path / "workspace"),
         claude_workspace=str(tmp_path / "data"),
         host="127.0.0.1",
         port=8082,
@@ -303,12 +279,8 @@ def test_app_lifespan_flush_pending_save_exception_warning_only(tmp_path):
     app = create_app()
 
     settings = SimpleNamespace(
-        messaging_platform="telegram",
         telegram_bot_token="token",
-        allowed_telegram_user_id="123",
-        discord_bot_token=None,
-        allowed_discord_channels=None,
-        allowed_dir=str(tmp_path / "workspace"),
+        allowed_telegram_user_id="123",        allowed_dir=str(tmp_path / "workspace"),
         claude_workspace=str(tmp_path / "data"),
         host="127.0.0.1",
         port=8082,
@@ -347,3 +319,4 @@ def test_app_lifespan_flush_pending_save_exception_warning_only(tmp_path):
 
     session_store.flush_pending_save.assert_called_once()
     cleanup_provider.assert_awaited_once()
+
