@@ -93,6 +93,10 @@ class Settings(BaseSettings):
     def parse_provider_type(model_string: str) -> str:
         return model_string.split("/", 1)[0]
 
+    @staticmethod
+    def parse_model_name(model_string: str) -> str:
+        return model_string.split("/", 1)[1]
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
