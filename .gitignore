@@ -1,4 +1,7 @@
 __pycache__
+dist/
+build/
+*.spec
 .claude
 .cursor
 .pytest_cache
