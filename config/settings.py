@@ -32,7 +32,7 @@ class Settings(BaseSettings):
     # ==================== Model ====================
     # All Claude model requests are mapped to this single model (fallback)
     # Format: provider_type/model/name
-    model: str = "nvidia_nim/meta/llama3-70b-instruct"
+    model: str = "nvidia_nim/stepfun-ai/step-3.5-flash"
 
     # Per-model overrides (optional, falls back to MODEL)
     # Each can use a different provider
@@ -93,7 +93,7 @@ class Settings(BaseSettings):
 
     # ==================== Voice Note Transcription ====================
     voice_note_enabled: bool = Field(
-        default=True, validation_alias="VOICE_NOTE_ENABLED"
+        default=False, validation_alias="VOICE_NOTE_ENABLED"
     )
     # Device: "cpu" | "cuda" | "nvidia_nim"
     # - "cpu"/"cuda": local Whisper (requires voice_local extra: uv sync --extra voice_local)

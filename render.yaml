@@ -14,8 +14,6 @@ services:
       - key: ALLOWED_TELEGRAM_USER_ID
         sync: false
 
-      # ── Static values ────────────────────────────────────────────────────────
-      - key: MODEL
-        value: nvidia_nim/meta/llama3-70b-instruct
+      # ── Static values (match hardcoded defaults — kept for visibility) ────────
       - key: MESSAGING_PLATFORM
         value: telegram
